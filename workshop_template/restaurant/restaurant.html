@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="icon" href="./snaplogic_logo_small.png">
+
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.3.1/css/all.css" integrity="sha384-mzrmE5qonljUremFsqc01SB46JvROS7bZs3IO2EmfFsd15uHvIt+Y8vEf7N7fWAU"
+        crossorigin="anonymous">
+    <link rel="stylesheet" href="./vendor/sweetalert2.min.css">
+
+    <title>Jump's Restaurant</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="./vendor/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Custom styles for this template -->
+    <link href="./vendor/form-validation.css" rel="stylesheet">
+</head>
+
+<body class="bg-light">
+    <div id="profile" class="d-flex flex-column flex-md-row align-items-center p-3 px-md-4 mb-3 bg-white border-bottom shadow-sm">
+        <h5 class="my-0 mr-md-auto font-weight-normal"> <img class="d-block mx-auto" src="./snaplogic_logo_small.png"
+                alt="" height="60" width="120"></h5>
+        <nav class="my-2 my-md-0 mr-md-3">
+            <a class="p-2 text-dark">{{profileData.firstName}}</a>
+            <a class="p-2 text-dark">{{profileData.lastName}}</a>
+            <a class="p-2 text-dark">Reward:{{profileData.reward}}</a>
+        </nav>
+        <button class="btn btn-outline-primary" v-on:click="gotoSignIn()">Sign Out</button>
+    </div>
+    <div class="container-fluid">
+        <div id="spinner" v-if="!menuLoaded.value" class="align-items-center text-center" style="left: 50%; margin-top:5%">
+            <i class="fa fa-spinner fa-spin" style="font-size:128px;color:cadetblue"></i>
+        </div>
+        <div class="row ">
+            <div id="cart" v-if="menuLoaded.value" class=" col-md-4 order-md-2 mb-4">
+                <h4 class="d-flex justify-content-between align-items-center mb-3">
+                    <span class="text-muted">Order</span>
+                    <span class="badge badge-secondary badge-pill">{{items.length}}</span>
+                </h4>
+                <ul class="list-group mb-3 ">
+                    <li class="list-group-item d-flex justify-content-between lh-condensed" v-bind:class="{'text-success': item.status>0}"
+                        v-for="item in items">
+                        <div class="col-md-6 align-middle">
+                            <h6 class="my-0">
+                                <button v-if="item.status == 0" class="btn btn-default btn-lg" v-on:click="removeItem(item)">
+                                    <i class="far fa-trash-alt"></i>
+                                </button>
+                                <span>{{item.name}}</span>
+                                <span v-if="item.price.size >0"> ({{getPriceLabel(item.price.size)}}) </span></h6>
+                        </div>
+                        <div class="row col-md-5">
+                            <div>
+                                <button v-if="item.status == 0" class="btn btn-default btn-lg" v-bind:class="{ disabled: item.status!=0 }"
+                                    v-on:click="increaseItem(item)"><i class="far fa-plus-square"></i></button>
+                                <span>{{item.amount}}</span>
+                                <button v-if="item.status == 0" class="btn btn-default btn-lg" v-bind:class="{ disabled: item.status!=0 }"
+                                    v-on:click="decreaseItem(item)"><i class="far fa-minus-square"></i></button>
+                            </div>
+                        </div>
+
+                        <p class="text-muted">{{item.amount * item.price.value |currency('฿')}} </p>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>Total</span>
+                        <strong>{{totalPrice.value |currency('฿')}}</strong>
+                    </li>
+                </ul>
+                <button v-if="!canCheckout()" type="button" class="btn btn-outline-success col-md-12" v-bind:class="{ disabled: inProgress }"
+                    v-on:click="submit()">Order</button>
+                <button v-if="canCheckout()&&!checkoutState.value && !inProgress" type="button" class="btn btn-outline-success col-md-12"
+                    v-on:click="checkout()">Checkout</button>
+            </div>
+
+            <div id="info" v-if="menuLoaded.value" class="col-md-8 order-md-1">
+                <div v-if="!checkoutState.value" class="row smooth-scroll list-unstyled">
+                    <div class="col-md-4" v-for="item in items">
+                        <div class="card mb-4 box-shadow">
+                            <img class="card-img-top" data-src="holder.js/100px225?theme=thumb&amp;bg=55595c&amp;fg=eceeef&amp;text=Thumbnail"
+                                alt="Thumbnail [100%x225]" style="height: 225px; width: 100%; display: block;"
+                                v-bind:src="item.img" data-holder-rendered="true">
+                            <div class="card-body">
+                                <p class="card-text">{{item.name}}</p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="btn-group">
+                                        <button type="button" v-for="price in item.prices" class="btn  btn-outline-success "
+                                            v-on:click="selectMenu(item, price)">{{price.value|
+                                            currency('$')}}</button>
+                                    </div>
+                                    <small class="text-muted">{{item.price}}</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                <form v-if="checkoutState.value" class="needs-validation container" novalidate="">
+
+                    <h4 class="mb-3">Payment</h4>
+
+                    <div class="d-block my-3">
+                        <div class="custom-control custom-radio">
+                            <input id="credit" name="paymentMethod" v-model="paymentMethod" type="radio" value="credit"
+                                class="custom-control-input" checked="" required="">
+                            <label class="custom-control-label" for="credit">Credit card</label>
+                        </div>
+                        <div class="custom-control custom-radio">
+                            <input id="debit" name="paymentMethod" type="radio" v-model="paymentMethod" value="cash"
+                                class="custom-control-input" required="">
+                            <label class="custom-control-label" for="debit">Cash</label>
+                        </div>
+                    </div>
+                    <div v-if='paymentMethod=="credit"'>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="cc-name">Name on card</label>
+                                <input type="text" class="form-control" id="cc-name" v-model="creditName" placeholder="" required="">
+                                <small class="text-muted">Full name as displayed on card</small>
+                                <div class="invalid-feedback">
+                                    Name on card is required
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="cc-number">Credit card number</label>
+                                <input type="text" class="form-control" id="cc-number" v-model="creditNumber" placeholder="" required="">
+                                <div class="invalid-feedback">
+                                    Credit card number is required
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-3 mb-3">
+                                <label for="cc-expiration">Expiration</label>
+                                <input type="text" class="form-control" id="cc-expiration" v-model="creditExpire" placeholder="" required="">
+                                <div class="invalid-feedback">
+                                    Expiration date required
+                                </div>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label for="cc-expiration">CVV</label>
+                                <input type="text" class="form-control" id="cc-cvv" v-model="creditCVV" placeholder="" required="">
+                                <div class="invalid-feedback">
+                                    Security code required
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="mb-4">
+                    <button class="btn btn-primary btn-lg btn-block" v-bind:class="{ disabled: inProgress }" v-on:click="pay()"
+                        type="button">Pay
+                    </button>
+                </form>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="./vendor/sweetalert2.all.min.js"></script>
+    <script src="./vendor/vue.min.js"></script>
+    <script src="./vendor/vue2-filters.min.js"></script>
+    <script src="./util.js"></script>
+    <script src="restaurant.js"> </script>
+
+</body>
+
+</html>

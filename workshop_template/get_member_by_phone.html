@@ -1,0 +1,124 @@
+<!doctype html>
+
+<head>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css">
+
+    <!-- Title of the page -->
+    <title>Get Member by Phone</title>
+
+</head>
+
+<body>
+
+    <!-- Ultra button -->
+    <button type="button" class="btn btn-success" style="width: 150px; height: 50px; margin: 20px" onClick="ultraClicked()">Ultra</button>
+
+    <!-- Triggered button -->
+    <button type="button" class="btn btn-info" style="width: 150px; height: 50px; margin: 20px" onClick="triggeredClicked()">Triggered</button>
+
+    <script>
+
+        // Function to be called when clicking at Ultra button
+        function ultraClicked() {
+            var url = "xxxx";
+            var token = "snaplogic_ml_showcase";
+            var params = { "phone": "0811111111" };
+            action = function (responseJson) {
+                console.log(responseJson);
+                alert(JSON.stringify(responseJson, null, 2));
+            }
+            action_fail = function () {
+                var err_message = "Failed to perform the operation. Something is wrong with the request, internet connection, and/or pipeline.";
+                console.log(err_message)
+                alert(err_message);
+            }
+            requestSnapLogic(url, token, params, action, action_fail);
+        }
+
+        // Function to be called when clicking at Triggered button
+        function triggeredClicked() {
+            var url = "xxxx";
+            var token = "snaplogic_ml_showcase";
+            var data = [
+                {
+                    "content":
+                    {
+                        "token": "snaplogic_ml_showcase",
+                        "params": {
+                            "phone": "0811111111"
+                        }
+                    }
+                },
+                {
+                    "content":
+                    {
+                        "token": "snaplogic_ml_showcase",
+                        "params": {
+                            "phone": "08xxxxxxxx"
+                        }
+                    }
+                }];
+            action = function (responseJson) {
+                console.log(responseJson);
+                alert(JSON.stringify(responseJson, null, 2));
+            }
+            action_fail = function () {
+                var err_message = "Failed to perform the operation. Something is wrong with the request, internet connection, and/or pipeline.";
+                console.log(err_message)
+                alert(err_message);
+            }
+            requestSnapLogicTrigger(url, token, data, action, action_fail);
+        }
+
+        // Ultra task util function
+        function requestSnapLogic(url, token, params, action, action_fail) {
+            var xhr = new XMLHttpRequest();
+            xhr.open("POST", url, true);
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                    var responseJson = JSON.parse(xhr.responseText);
+                    action(responseJson);
+                }
+                else if (xhr.status != 200) {
+                    action_fail();
+                }
+            };
+            var content = {
+                "token": token,
+                "params": params
+            };
+            xhr.send(JSON.stringify(content));
+        }
+
+        // Triggered task util function
+        function requestSnapLogicTrigger(url, token, data, action, action_fail) {
+            var xhr = new XMLHttpRequest();
+            if (data.length == 0) {
+                xhr.open("GET", url, true);
+            } else {
+                xhr.open("POST", url, true);
+                xhr.setRequestHeader("Content-Type", "application/json");
+            }
+            xhr.setRequestHeader("Authorization", "Bearer " + token);
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                    var responseJson = JSON.parse(xhr.responseText);
+                    action(responseJson);
+                }
+                else if (xhr.status != 200) {
+                    action_fail();
+                }
+            };
+            if (data.length == 0) {
+                xhr.send();
+            }
+            else {
+                xhr.send(JSON.stringify(data));
+            }
+        }
+
+    </script>
+
+</body>
+
+</html>

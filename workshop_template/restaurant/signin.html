@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="">
+  <meta name="author" content="">
+  <link rel="icon" href="./snaplogic_logo_small.png">
+
+  <title>Jump's Restaurant</title>
+
+  <!-- Bootstrap core CSS -->
+  <link href="./vendor/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="./vendor/sweetalert2.min.css">
+  <!-- Custom styles for this template -->
+  <link href="./signin.css" rel="stylesheet">
+</head>
+
+<body class="text-center">
+  <form id="memberinfo" class="form-signin">
+    <img class="" src="./snaplogic_logo_small.png" alt="" width="330">
+    <label for="inputTel" class="sr-only">Mobile number</label>
+    <input type="text" id="inputMobile" v-model="mobileNumber" class="form-control" placeholder="Mobile number"
+      required autofocus :disabled="showRegistrationForm">
+
+    <label v-if="showRegistrationForm" for="firstName" class="sr-only">First Name</label>
+    <input v-if="showRegistrationForm" v-model="firstName" type="text" id="firstName" class="form-control" placeholder="First name"
+      required>
+
+    <label v-if="showRegistrationForm" for="lastName" class="sr-only">Last Name</label>
+    <input v-if="showRegistrationForm" v-model="lastName" type="text" id="lastName" class="form-control" placeholder="Last name"
+      required>
+    <br>
+    <button v-if="!showRegistrationForm" v-on:click="signin()" class="btn btn-lg btn-primary btn-block" v-bind:class="{'disabled': !isValidPhoneNumber()}"
+      type="button">Sign In</button>
+    <button v-if="showRegistrationForm" v-on:click="register()" class="btn btn-lg btn-primary btn-block" v-bind:class="{'disabled': !canRegister()}"
+      type="button">Register</button>
+    <p class="mt-5 mb-3 text-muted">&copy; Jump's Restaurant</p>
+  </form>
+</body>
+<script src="./vendor/vue.min.js"></script>
+<script src="./vendor/sweetalert2.all.min.js"></script>
+<script src="./util.js"></script>
+<script>
+  let memberInfo = new Vue({
+    el: "#memberinfo",
+    data: {
+      showRegistrationForm: false,
+      mobileNumber: "",
+      firstName: "",
+      lastName: "",
+      inProgress: false
+    },
+
+    methods: {
+      canRegister: function () {
+        return this.firstName.trim().length > 0 && this.lastName.trim().length > 0
+      },
+      isValidPhoneNumber: function () {
+        return this.mobileNumber.trim().length > 0
+      },
+      signin: function () {
+        if (!this.isValidPhoneNumber()) {
+          console.log("Invalid phone number.");
+          return;
+        }
+        let self = this;
+        // TODO: Replace URL for "01-07 Get Member Info API-Task"
+        let url = "xxxx";
+        let token = "snaplogic_ml_showcase";
+        let params = { phone: self.mobileNumber };
+        function action(responseJson) {
+          console.log(responseJson)
+          if (responseJson.member_id != undefined) {
+            console.log("already registrered");
+            self.gotoRestaurant(responseJson.member_id)
+          } else {
+            console.log("new member");
+            self.showRegistrationForm = true;
+          }
+        }
+        requestSnapLogic(url, token, params, action);
+      },
+      register: function () {
+        let self = this;
+        if (this.inProgress || !this.canRegister()) {
+          return;
+        }
+        this.inProgress = false;
+        // TODO: Replace URL for "01-08 New Member API-Task"
+        let url = "xxxx";
+        let token = "snaplogic_ml_showcase";
+        let params = {
+          phone: self.mobileNumber,
+          firstname: self.firstName,
+          lastname: self.lastName
+        }
+        function action(responseJson) {
+          console.log(responseJson)
+          let member_id = responseJson.member_id
+          self.inProgress = true;
+          self.gotoRestaurant(member_id);
+        }
+        requestSnapLogic(url, token, params, action);
+      },
+      gotoRestaurant: function (member_id) {
+        window.location = "./restaurant.html?member_id=" + member_id
+      }
+    }
+  });
+</script>
+
+</html>

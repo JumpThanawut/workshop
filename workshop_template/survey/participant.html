@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.0/jquery-ui.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js"></script>
+
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/css/bootstrap.min.css">
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.1/js/bootstrap.min.js"></script>
+    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+
+    <title>Let me Know</title>
+
+</head>
+
+<body>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-3" align="center" style=background-color:white;>
+                <form>
+                    <input type="button" class="btn btn-outline-primary" value="1" onClick="choose(1)" style="width: 90%; height: 80px; margin: 10px;">
+                </form>
+            </div>
+            <div class="col-md-3" align="center" style=background-color:white;>
+                <form>
+                    <input type="button" class="btn btn-outline-primary" value="2" onClick="choose(2)" style="width: 90%; height: 80px; margin: 10px;">
+                </form>
+            </div>
+            <div class="col-md-3" align="center" style=background-color:white;>
+                <form>
+                    <input type="button" class="btn btn-outline-primary" value="3" onClick="choose(3)" style="width: 90%; height: 80px; margin: 10px;">
+                </form>
+            </div>
+            <div class="col-md-3" align="center" style=background-color:white;>
+                <form>
+                    <input type="button" class="btn btn-outline-primary" value="4" onClick="choose(4)" style="width: 90%; height: 80px; margin: 10px;">
+                </form>
+            </div>
+        </div>
+
+        <script>
+
+            var session_id = (new Date()).getTime() + "";
+            function choose(x) {
+                var url = "https://prod-ml-fm.snaplogic.io/api/1/rest/feed-master/queue/MachineLearning/projects/SnapLogicWorkshop/survey%20client%20API%20task";
+                var token = "snaplogic_ml_showcase";
+                var params = {
+                    "choice": x,
+                    "session_id": session_id
+                }
+                function action(responseJson) {
+                    swal("Thank you!", "You chose " + responseJson.choice, "success");
+                }
+                function action_fail() {
+                    swal("Sorry!", "Please check your internet connection", "warning");
+                }
+                requestSnapLogic(url, token, params, action, action_fail);
+            }
+
+            function requestSnapLogic(url, token, params, action, action_fail) {
+                var xhr = new XMLHttpRequest();
+                xhr.open("POST", url, true);
+                xhr.onreadystatechange = function () {
+                    if (xhr.readyState === 4 && xhr.status === 200) {
+                        var responseJson = JSON.parse(xhr.responseText);
+                        action(responseJson);
+                    }
+                    else if (xhr.status != 200) {
+                        action_fail();
+                    }
+                };
+                var content = {
+                    "token": token,
+                    "params": params
+                };
+                xhr.send(JSON.stringify(content));
+            }
+
+            function requestSnapLogicTrigger(url, token, data, action, action_fail) {
+                var xhr = new XMLHttpRequest();
+                if (data.length == 0) {
+                    xhr.open("GET", url, true);
+                } else {
+                    xhr.open("POST", url, true);
+                    xhr.setRequestHeader("Content-Type", "application/json");
+                }
+                xhr.setRequestHeader("Authorization", "Bearer " + token);
+                xhr.onreadystatechange = function () {
+                    if (xhr.readyState === 4 && xhr.status === 200) {
+                        var responseJson = JSON.parse(xhr.responseText);
+                        action(responseJson);
+                    }
+                    else if (xhr.status != 200) {
+                        action_fail();
+                    }
+                };
+                if (data.length == 0) {
+                    xhr.send();
+                }
+                else {
+                    xhr.send(JSON.stringify(data));
+                }
+            }
+        </script>
+    </div>
+
+</body>
+
+</html>
